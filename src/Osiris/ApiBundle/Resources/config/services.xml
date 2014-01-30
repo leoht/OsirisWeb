@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+
+        <service id="osiris_api.socket_server"
+                 class="Osiris\ApiBundle\SocketServer">
+        </service>
+
+        <service id="osiris_api.io_server"
+                 class="Ratchet\Server\IoServer"
+                 factory-class="Ratchet\Server\IoServer"
+                 factory-method="factory">
+
+                <argument type="service" id="osiris_api.socket_server"/>
+                <argument>%api.socket_server.port%</argument>
+        </service>
+
+    </services>
+    
+</container>

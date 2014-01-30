@@ -1,0 +1,10 @@
+osiris_api:
+    resource: "@OsirisApiBundle/Controller/"
+    type:     annotation
+    prefix:   /
+
+osiris_app:
+    resource: "@OsirisAppBundle/Controller/"
+    type:     annotation
+    prefix:   /
+

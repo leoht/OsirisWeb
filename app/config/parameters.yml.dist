@@ -13,3 +13,5 @@ parameters:
 
     locale:            en
     secret:            ThisTokenIsNotSoSecretChangeIt
+
+    api.socket_server.port: 8888
