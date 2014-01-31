@@ -4,6 +4,7 @@ namespace Osiris\ApiBundle;
 
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
+use Osiris\ApiBundle\Api\ApiMessages;
 
 /**
 * Socket IO server.
@@ -24,7 +25,7 @@ class SocketServer implements MessageComponentInterface
     }
 
     public function onMessage(ConnectionInterface $from, $msg) {
-        
+        $this->processMessage($from, $msg);
     }
 
     public function onClose(ConnectionInterface $conn) {
@@ -37,5 +38,41 @@ class SocketServer implements MessageComponentInterface
         echo "An error has occurred: {$e->getMessage()}\n";
 
         $conn->close();
+    }
+
+    protected function processMessage(ConnectionInterface $from, $message)
+    {
+    	$messageData = json_decode($message, true);
+
+    	// If a token isn't provided in the message, we can't process it.
+    	if (!array_key_exists('token', $messageData)) {
+    		$from->send(json_encode(array(
+    			'code' => '400',
+    			'message' => 'No token was provided.',
+    		)));
+
+    		return;
+    	}
+
+    	// If no direction is provided, we assume it's player to device
+    	if (!array_key_exists('direction', $messageData)) {
+    		$messageData['direction'] = ApiMessages::FROM_PLAYER_TO_DEVICE;
+    	}
+
+    	$this->dispatchMessage($from, $messageData);
+    }
+
+    protected function dispatchMessage(ConnectionInterface $from, $messageData)
+    {
+    	if ($messageData['direction'] == ApiMessages::FROM_PLAYER_TO_DEVICE) {
+    		$this->deviceApi->handle($messageData);
+    	} else if ($messageData['direction'] == ApiMessages::FROM_DEVICE_TO_PLAYER) {
+    		$this->playerApi->handle($messageData);
+    	} else {
+    		$from->send(json_encode(array(
+    			'code' => '400',
+    			'message' => 'No valid direction was provided for the incoming message.',
+    		)));
+    	}
     }
 }
