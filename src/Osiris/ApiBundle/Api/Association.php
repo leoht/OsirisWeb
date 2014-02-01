@@ -67,6 +67,16 @@ class Association
 		return $code;
 	}
 
+    public static function createToken(Association $association)
+    {
+        $playerSocketId = $association->getPlayerSocket()->resourceId;
+        $mobileSocketId = $association->getMobileSocket()->resourceId;
+
+        $token = md5($playerSocketId.'-'.$mobileSocketId);
+
+        return $token;
+    }
+
 	public function completeWithMessage(ConnectionInterface $from, Message $message)
 	{
 		if ($message->getName() == MessageTypes::ASSOCIATE_WITH_FACEBOOK) {
@@ -94,6 +104,12 @@ class Association
 			return false;
 		}
 	}
+
+    public function broadcast($data)
+    {
+        $this->getPlayerSocket()->send($data);
+        $this->getMobileSocket()->send($data);
+    }
 
     /**
      * Gets the value of playerSocket.

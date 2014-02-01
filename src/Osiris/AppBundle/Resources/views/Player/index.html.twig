@@ -29,10 +29,13 @@
         
        
         <script src="{{ asset('bundles/osirisapp/js/api.js') }}"></script>
+        <script src="{{ asset('bundles/osirisapp/js/api-messages-types.js') }}"></script>
         <script src="{{ asset('bundles/osirisapp/js/player.js') }}"></script>
 
         <script>
-        	Api.beginConnection()
+        	Api.beginConnection(function () {
+                Api.send(BEGIN_CODE_ASSOCIATION, {})
+            })
         </script>
 </body>
 </html>

@@ -21,11 +21,17 @@ class SocketServer implements MessageComponentInterface
     /**
      * @var Association[]
      */
-    protected $associations;
+    protected $ongoingAssociations;
+
+    /**
+     * @var Association[]
+     */
+    protected $completedAssociations;
 
     public function __construct() {
         $this->clients = new \SplObjectStorage;
-        $this->associations = array();
+        $this->ongoingAssociations = array();
+        $this->completedAssociations = array();
     }
 
     public function onOpen(ConnectionInterface $conn) {
@@ -60,14 +66,50 @@ class SocketServer implements MessageComponentInterface
         if ($message->getName() == MessageTypes::BEGIN_FACEBOOK_ASSOCIATION 
             || $message->getName() == MessageTypes::BEGIN_CODE_ASSOCIATION ) {
 
-            $this->associations[] = Association::createFromMessage($from, $message);
+            $association = Association::createFromMessage($from, $message);
+
+            $identifier = $association->getFacebookId() ?: $association->getAssociationCode();
+
+            $this->ongoingAssociations[$identifier] = $association;
+
         } elseif ($message->getName() == MessageTypes::ASSOCIATE_WITH_FACEBOOK 
             || $message->getName() == MessageTypes::ASSOCIATE_WITH_CODE ) {
 
-            $association = $this->associations[0];
-            $association->completeWithMessage($from, $message);
-        } else {
+            $identifier = $message->get('facebook_id') ?: $message->get('code');
 
+            $association = $this->ongoingAssociations[$identifier];
+
+            if ($association->completeWithMessage($from, $message)) {
+                $this->registerAssociation($association);
+            } else {
+                $from->send(json_encode(array(
+                    'direction' => MessageTypes::FROM_PLAYER_TO_DEVICE,
+                    'name'      => MessageTypes::ASSOCIATION_REFUSED,
+                )));
+            }
+        } else {
+            // other messages
         }
+    }
+
+    protected function registerAssociation(Association $association)
+    {
+        $associationToken = Association::createToken($association);
+
+        $this->completedAssociations[$associationToken] = $association;
+
+        // now communicate token to the two devices
+
+        $messageJson = json_encode(array(
+            'direction' => MessageTypes::BROADCAST,
+            'name' => MessageTypes::ASSOCIATED_WITH_TOKEN,
+            'data' => array(
+                'token' => $associationToken,
+            ),
+        ));
+
+        echo "Devices {$association->getPlayerSocket()->resourceId} and {$association->getMobileSocket()->resourceId} associated with token $associationToken";
+
+        $association->broadcast($messageJson);
     }
 }

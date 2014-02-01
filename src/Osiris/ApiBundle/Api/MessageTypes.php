@@ -7,6 +7,8 @@ namespace Osiris\ApiBundle\Api;
 */
 class MessageTypes
 {
+	const BROADCAST = 'brodcast';
+	
 	const FROM_PLAYER_TO_DEVICE = 'player_to_device';
 
 	const FROM_DEVICE_TO_PLAYER = 'device_to_player';
@@ -19,7 +21,9 @@ class MessageTypes
 
 	const ASSOCIATE_WITH_CODE = 'api.associate.code';
 
-	const ASSOCIATED_SUCCESSFULLY = 'api.associated';
+	const ASSOCIATION_REFUSED = 'api.associate.refused';
+
+	const ASSOCIATED_WITH_TOKEN = 'api.associated.token';
 
 	const DISASSOCIATE = 'api.disassociate';
 }
