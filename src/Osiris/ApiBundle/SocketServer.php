@@ -4,17 +4,28 @@ namespace Osiris\ApiBundle;
 
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
-use Osiris\ApiBundle\Api\ApiMessages;
+use Osiris\ApiBundle\Api\Association;
+use Osiris\ApiBundle\Api\Message;
+use Osiris\ApiBundle\Api\MessageTypes;
 
 /**
 * Socket IO server.
 */
 class SocketServer implements MessageComponentInterface
 {
+    /**
+     * @var ConnectionInterface[]
+     */
 	protected $clients;
+
+    /**
+     * @var Association[]
+     */
+    protected $associations;
 
     public function __construct() {
         $this->clients = new \SplObjectStorage;
+        $this->associations = array();
     }
 
     public function onOpen(ConnectionInterface $conn) {
@@ -44,35 +55,19 @@ class SocketServer implements MessageComponentInterface
     {
     	$messageData = json_decode($message, true);
 
-    	// If a token isn't provided in the message, we can't process it.
-    	if (!array_key_exists('token', $messageData)) {
-    		$from->send(json_encode(array(
-    			'code' => '400',
-    			'message' => 'No token was provided.',
-    		)));
+        $message = Message::fromRawData($messageData);
 
-    		return;
-    	}
+        if ($message->getName() == MessageTypes::BEGIN_FACEBOOK_ASSOCIATION 
+            || $message->getName() == MessageTypes::BEGIN_CODE_ASSOCIATION ) {
 
-    	// If no direction is provided, we assume it's player to device
-    	if (!array_key_exists('direction', $messageData)) {
-    		$messageData['direction'] = ApiMessages::FROM_PLAYER_TO_DEVICE;
-    	}
+            $this->associations[] = Association::createFromMessage($from, $message);
+        } elseif ($message->getName() == MessageTypes::ASSOCIATE_WITH_FACEBOOK 
+            || $message->getName() == MessageTypes::ASSOCIATE_WITH_CODE ) {
 
-    	$this->dispatchMessage($from, $messageData);
-    }
+            $association = $this->associations[0];
+            $association->completeWithMessage($from, $message);
+        } else {
 
-    protected function dispatchMessage(ConnectionInterface $from, $messageData)
-    {
-    	if ($messageData['direction'] == ApiMessages::FROM_PLAYER_TO_DEVICE) {
-    		$this->deviceApi->handle($messageData);
-    	} else if ($messageData['direction'] == ApiMessages::FROM_DEVICE_TO_PLAYER) {
-    		$this->playerApi->handle($messageData);
-    	} else {
-    		$from->send(json_encode(array(
-    			'code' => '400',
-    			'message' => 'No valid direction was provided for the incoming message.',
-    		)));
-    	}
+        }
     }
 }
