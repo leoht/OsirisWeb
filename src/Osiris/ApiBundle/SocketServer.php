@@ -6,6 +6,7 @@ use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
 use Osiris\ApiBundle\Api\Association;
 use Osiris\ApiBundle\Api\Message;
+use Osiris\ApiBundle\Api\TokenizedMessage;
 use Osiris\ApiBundle\Api\MessageTypes;
 
 /**
@@ -28,6 +29,9 @@ class SocketServer implements MessageComponentInterface
      */
     protected $completedAssociations;
 
+    /**
+     * Constructor.
+     */
     public function __construct() {
         $this->clients = new \SplObjectStorage;
         $this->ongoingAssociations = array();
@@ -57,14 +61,25 @@ class SocketServer implements MessageComponentInterface
         $conn->close();
     }
 
+    /**
+     * Process a message.
+     * If the two devices haven' been associated yet,
+     * this is where the association process takes place.
+     * Otherwise, the message is simply dispatched to the devices association,
+     * which in turns takes care of delivering the message to the device.
+     */
     protected function processMessage(ConnectionInterface $from, $message)
     {
     	$messageData = json_decode($message, true);
-
+        // create the message object from the received data
         $message = Message::fromRawData($messageData);
 
         if ($message->getName() == MessageTypes::BEGIN_FACEBOOK_ASSOCIATION 
             || $message->getName() == MessageTypes::BEGIN_CODE_ASSOCIATION ) {
+
+            // If it is an association initialization,
+            // we temporarely register the incomplete association,
+            // waiting for the second device to associate.
 
             $association = Association::createFromMessage($from, $message);
 
@@ -75,7 +90,22 @@ class SocketServer implements MessageComponentInterface
         } elseif ($message->getName() == MessageTypes::ASSOCIATE_WITH_FACEBOOK 
             || $message->getName() == MessageTypes::ASSOCIATE_WITH_CODE ) {
 
+            // Now we have a request for association from the second device.
+            // We rely on the Association::completeWithMessage method to
+            // validate the association (with right code/facebook ID) and if so,
+            // the association is registered as complete and the two devices can now
+            // communicate.
+
             $identifier = $message->get('facebook_id') ?: $message->get('code');
+
+            if (!array_key_exists($identifier, $this->ongoingAssociations)) {
+                $from->send(json_encode(array(
+                    'direction' => MessageTypes::FROM_PLAYER_TO_DEVICE,
+                    'name'      => MessageTypes::ASSOCIATION_REFUSED,
+                )));
+
+                return;
+            }
 
             $association = $this->ongoingAssociations[$identifier];
 
@@ -88,10 +118,31 @@ class SocketServer implements MessageComponentInterface
                 )));
             }
         } else {
-            // other messages
+            
+            // For all other messages, a token should be provided
+            // If so, we should have at this point a TokenizedMessage instance
+            // (provided by the Message::create factory method).
+            // Otherwise it means that no token has been provided, and we
+            // cannot do anything else without the token.
+
+            if (!$message instanceof TokenizedMessage) {
+                $from->send(json_encode(array(
+                    'code' => 400,
+                    'message' => 'No token information was provided.',
+                )));
+
+                return;
+            }
+
+            $this->completedAssociations[$message->getToken()]->dispatch($message);
         }
     }
 
+    /**
+     * Registers a completed association.
+     * Once an association is completed, it is registered
+     * using its token.
+     */
     protected function registerAssociation(Association $association)
     {
         $associationToken = Association::createToken($association);

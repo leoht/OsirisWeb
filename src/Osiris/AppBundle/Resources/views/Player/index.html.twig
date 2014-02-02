@@ -23,6 +23,8 @@
 
             <div class="player-controls">
                 <button id="play-pause-button" class="play" title="Play" onclick="togglePlayPause()">Play</button>
+
+                <button class="get-code-button" title="Get code" >Get code</button>
             </div>
         </div>
 
@@ -33,9 +35,15 @@
         <script src="{{ asset('bundles/osirisapp/js/player.js') }}"></script>
 
         <script>
-        	Api.beginConnection(function () {
-                Api.send(BEGIN_CODE_ASSOCIATION, {})
+
+        document
+            .querySelectorAll('.get-code-button')[0]
+            .addEventListener('click', function () {
+                Api.beginConnection(function () {
+                    Api.send(BEGIN_CODE_ASSOCIATION, {})
+                })
             })
+        	
         </script>
 </body>
 </html>

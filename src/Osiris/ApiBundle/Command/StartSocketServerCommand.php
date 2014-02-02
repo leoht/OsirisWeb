@@ -45,8 +45,6 @@ class StartSocketServerCommand extends ContainerAwareCommand
 
 	    $output->writeln("Server running on port $port");
 
-		$server->run();
-
-		
+		$server->run();		
 	}
 }

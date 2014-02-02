@@ -7,15 +7,35 @@ namespace Osiris\ApiBundle\Api;
 */
 class Message
 {
+    /**
+     * @var string
+     */
 	protected $name;
 
+     /**
+     * @var string
+     */
 	protected $direction;
 
+     /**
+     * @var array
+     */
 	protected $data;
 
+     /**
+     * Creates a message from raw data in an array.
+     */
 	public static function fromRawData(array $data)
 	{
 		$message = new static();
+
+        // If the message contains token information,
+        // it means that the two devices are already associated
+
+        if (array_key_exists('token', $data)) {
+            $message = new TokenizedMessage();
+            $message->setToken($data['token']);
+        }
 
 		// We cannot load a message if required infos are not provided.
 		if (!array_key_exists('direction', $data)

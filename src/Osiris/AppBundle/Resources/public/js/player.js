@@ -1,5 +1,7 @@
 'use strict'
 
+var playingTimer;
+
 document.addEventListener('DOMContentLoaded', function () {
     initializeMediaPlayer()
 }, false)
@@ -18,11 +20,16 @@ var togglePlayPause = function () {
       btn.innerHTML = 'Pause';
       btn.className = 'pause';
       mediaPlayer.play();
+
+      playingTimer = setInterval(function () {
+        Api.send('api.playing.current_timecode', {"timecode":Math.ceil(mediaPlayer.currentTime)})
+      }, 1000)
    }
    else {
       btn.title = 'Play';
       btn.innerHTML = 'Play';
       btn.className = 'play';
       mediaPlayer.pause();
+      playingTimer.clearInterval()
    }
 }
