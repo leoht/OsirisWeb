@@ -13,6 +13,8 @@ class MessageTypes
 
 	const FROM_DEVICE_TO_PLAYER = 'device_to_player';
 
+	const FROM_DEVICE_TO_SERVER = 'device_to_server';
+
 	const BEGIN_FACEBOOK_ASSOCIATION = 'api.associate.facebook.start';
 
 	const ASSOCIATE_WITH_FACEBOOK = 'api.associate.facebook';
@@ -28,4 +30,8 @@ class MessageTypes
 	const ASSOCIATED_WITH_TOKEN = 'api.associated.token';
 
 	const DISASSOCIATE = 'api.disassociate';
+
+	const REQUEST_FOR_NOTICE_AT_TIMECODE = 'api.playing.request_notice';
+
+	const NOTICE_AT_TIMECODE = 'api.playing.notice';
 }

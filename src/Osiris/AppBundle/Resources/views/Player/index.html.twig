@@ -28,22 +28,32 @@
             </div>
         </div>
 
-        
-       
         <script src="{{ asset('bundles/osirisapp/js/api.js') }}"></script>
         <script src="{{ asset('bundles/osirisapp/js/api-messages-types.js') }}"></script>
+        <script src="{{ asset('bundles/osirisapp/js/api-listeners.js') }}"></script>
         <script src="{{ asset('bundles/osirisapp/js/player.js') }}"></script>
+        <script>    
 
-        <script>
-
-        document
-            .querySelectorAll('.get-code-button')[0]
-            .addEventListener('click', function () {
-                Api.beginConnection(function () {
-                    Api.send(BEGIN_CODE_ASSOCIATION, {})
-                })
-            })
-        	
+        window.onload = function () {
+            api.beginConnection(function () {
+                console.log('connected')
+                 document
+                .querySelectorAll('.get-code-button')[0]
+                .addEventListener('click', function () {
+                    api.beginConnection(function () {
+                        api.send(BEGIN_CODE_ASSOCIATION, {})
+                    })
+                });
+            });
+        };
+        
+           
+            
         </script>
+        
+        
+        
+
+
 </body>
 </html>

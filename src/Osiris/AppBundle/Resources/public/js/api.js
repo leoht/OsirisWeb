@@ -1,41 +1,51 @@
 'use strict'
 
-var socket
 var SOCKET_SERVER_ADDR = '127.0.0.1'
 var SOCKET_SERVER_PORT = '4567'
 
-function Api () {
-	var token = '';
+var Api = function () {
+	this.token = '';
+	this.callbacks = new Object();
+	this.socket = null
 }
 
-Api.beginConnection = function (callback) {
-	socket = new WebSocket('ws://'+SOCKET_SERVER_ADDR+':'+SOCKET_SERVER_PORT)
+Api.prototype.beginConnection = function (callback) {
+	this.socket = new WebSocket('ws://'+SOCKET_SERVER_ADDR+':'+SOCKET_SERVER_PORT)
 
-	socket.onmessage = function (message) {
+	this.socket.onmessage = function (message) {
 		var data = JSON.parse(message.data)
 
 		console.log(data)
 
 		if (data.name == 'api.associated.token') {
-			Api.token = data.data.token
+			this.token = data.data.token
+		} else {
+			var cb = this.callbacks[data.name]
+			if (cb) {
+				cb(data.data)
+			}
 		}
-	};
+	}.bind(this);
 
-	socket.onopen = function () {
+	this.socket.onopen = function () {
 		callback.call()
 	}
 };
 
-Api.send = function (name, data) {
+Api.prototype.send = function (name, data) {
 	var message = {
 		name: name,
 		direction: 'player_to_device',
 		data: data
 	}
 
-	if (Api.token != '') {
-		message.token = Api.token
+	if (this.token != '') {
+		message.token = this.token
 	}
 
-	socket.send(JSON.stringify(message))
+	this.socket.send(JSON.stringify(message))
 };
+
+Api.prototype.on = function (messageName, callback) {
+	this.callbacks[messageName] = callback
+}

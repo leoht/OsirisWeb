@@ -8,6 +8,13 @@
 
         <service id="osiris_api.socket_server"
                  class="Osiris\ApiBundle\SocketServer">
+                <argument type="service" id="osiris_api.notice_provider"/>
+        </service>
+
+
+        <service id="osiris_api.notice_provider"
+                 class="Osiris\ApiBundle\Api\NoticeProvider">
+                <argument type="service" id="doctrine.orm.entity_manager"/>
         </service>
 
     </services>

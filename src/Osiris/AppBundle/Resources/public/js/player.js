@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeMediaPlayer()
 }, false)
 
-var mediaPlayer
+var mediaPlayer;
 
 var initializeMediaPlayer = function () {
     mediaPlayer = document.getElementById('player')
@@ -22,7 +22,7 @@ var togglePlayPause = function () {
       mediaPlayer.play();
 
       playingTimer = setInterval(function () {
-        Api.send('api.playing.current_timecode', {"timecode":Math.ceil(mediaPlayer.currentTime)})
+        api.send('api.playing.current_timecode', {"timecode":Math.ceil(mediaPlayer.currentTime)})
       }, 1000)
    }
    else {
@@ -30,6 +30,6 @@ var togglePlayPause = function () {
       btn.innerHTML = 'Play';
       btn.className = 'play';
       mediaPlayer.pause();
-      playingTimer.clearInterval()
+      clearInterval(playingTimer)
    }
 }

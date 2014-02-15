@@ -23,3 +23,9 @@ var ASSOCIATED_WITH_TOKEN = 'api.associated.token';
 var DISASSOCIATE = 'api.disassociate';
 
 var PLAYING_AT_TIMECODE = 'api.playing.current_timecode';
+
+var PLAY = 'api.movie.play';
+
+var PAUSE = 'api.movie.pause';
+
+var SET_VOLUME = 'api.movie.volume';

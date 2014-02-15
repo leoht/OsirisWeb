@@ -76,7 +76,7 @@ class Association
 
 		$code = '';
 
-		for ($i = 0 ; $i <= 4 ; $i++) {
+		for ($i = 0 ; $i <= 3 ; $i++) {
 			$code .= $alphabet[mt_rand(0,9)];
 		}
 

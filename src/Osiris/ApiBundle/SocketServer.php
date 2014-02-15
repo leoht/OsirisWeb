@@ -8,6 +8,7 @@ use Osiris\ApiBundle\Api\Association;
 use Osiris\ApiBundle\Api\Message;
 use Osiris\ApiBundle\Api\TokenizedMessage;
 use Osiris\ApiBundle\Api\MessageTypes;
+use Osiris\ApiBundle\Api\NoticeProvider;
 
 /**
 * Socket IO server.
@@ -30,9 +31,15 @@ class SocketServer implements MessageComponentInterface
     protected $completedAssociations;
 
     /**
+     * @var NoticeProvider
+     */
+    protected $noticeProvider;
+
+    /**
      * Constructor.
      */
-    public function __construct() {
+    public function __construct(NoticeProvider $noticeProvider) {
+        $this->noticeProvider = $noticeProvider;
         $this->clients = new \SplObjectStorage;
         $this->ongoingAssociations = array();
         $this->completedAssociations = array();
@@ -111,6 +118,7 @@ class SocketServer implements MessageComponentInterface
 
             if ($association->completeWithMessage($from, $message)) {
                 $this->registerAssociation($association);
+                unset($this->ongoingAssociations[$identifier]);
             } else {
                 $from->send(json_encode(array(
                     'direction' => MessageTypes::FROM_PLAYER_TO_DEVICE,
@@ -132,6 +140,19 @@ class SocketServer implements MessageComponentInterface
                 )));
 
                 return;
+            }
+
+            if ($message->getName() === MessageTypes::REQUEST_FOR_NOTICE_AT_TIMECODE
+                && '10' == $message->get('timecode')) {
+                // && $notice = $this->getNoticeProvider()->findByTimecode($message->get('timecode'))) {
+
+                   $this->completedAssociations[$message->getToken()]->broadcast(json_encode(array(
+                        'direction' => MessageTypes::BROADCAST,
+                        'name' => MessageTypes::NOTICE_AT_TIMECODE,
+                        'data' => array(
+                            'content' => 'Coucou'// $notice->getContent(),
+                        ),
+                    )));
             }
 
             $this->completedAssociations[$message->getToken()]->dispatch($message);
@@ -162,5 +183,101 @@ class SocketServer implements MessageComponentInterface
         echo "Devices {$association->getPlayerSocket()->resourceId} and {$association->getMobileSocket()->resourceId} associated with token $associationToken";
 
         $association->broadcast($messageJson);
+    }
+
+    /**
+     * Gets the value of clients.
+     *
+     * @return ConnectionInterface[]
+     */
+    public function getClients()
+    {
+        return $this->clients;
+    }
+
+    /**
+     * Sets the value of clients.
+     *
+     * @param ConnectionInterface[] $clients the clients
+     *
+     * @return self
+     */
+    public function setClients(ConnectionInterface $clients)
+    {
+        $this->clients = $clients;
+
+        return $this;
+    }
+
+    /**
+     * Gets the value of ongoingAssociations.
+     *
+     * @return Association[]
+     */
+    public function getOngoingAssociations()
+    {
+        return $this->ongoingAssociations;
+    }
+
+    /**
+     * Sets the value of ongoingAssociations.
+     *
+     * @param Association[] $ongoingAssociations the ongoing associations
+     *
+     * @return self
+     */
+    public function setOngoingAssociations(Association $ongoingAssociations)
+    {
+        $this->ongoingAssociations = $ongoingAssociations;
+
+        return $this;
+    }
+
+    /**
+     * Gets the value of completedAssociations.
+     *
+     * @return Association[]
+     */
+    public function getCompletedAssociations()
+    {
+        return $this->completedAssociations;
+    }
+
+    /**
+     * Sets the value of completedAssociations.
+     *
+     * @param Association[] $completedAssociations the completed associations
+     *
+     * @return self
+     */
+    public function setCompletedAssociations(Association $completedAssociations)
+    {
+        $this->completedAssociations = $completedAssociations;
+
+        return $this;
+    }
+
+    /**
+     * Gets the value of noticeProvider.
+     *
+     * @return NoticeProvider
+     */
+    public function getNoticeProvider()
+    {
+        return $this->noticeProvider;
+    }
+
+    /**
+     * Sets the value of noticeProvider.
+     *
+     * @param NoticeProvider $noticeProvider the notice provider
+     *
+     * @return self
+     */
+    public function setNoticeProvider(NoticeProvider $noticeProvider)
+    {
+        $this->noticeProvider = $noticeProvider;
+
+        return $this;
     }
 }
